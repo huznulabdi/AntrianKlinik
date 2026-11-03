@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Antrian Pendaftaran</title>
+<style>
+:root{--bg:#f4f0fb;--card:#fff;--tx:#25134a;--mut:#6b6485;--pri:#5b21b6;--pri2:#4c1d95;--acc:#f59e0b;--bd:#ddd3f2;--dng:#dc2626}
+@media(prefers-color-scheme:dark){:root{--bg:#150c2b;--card:#201340;--tx:#efe9ff;--mut:#a99fc7;--bd:#38275f;--pri:#8b5cf6;--pri2:#c4b5fd}}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--tx)}
+header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:12px 20px;background:linear-gradient(90deg,#4c1d95,#7c3aed);color:#fff}
+header h1{font-size:1.15rem;margin:0}header h1 small{display:block;font-weight:400;font-style:italic;color:#fcd34d;font-size:.8rem}
+nav{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+nav button{background:rgba(255,255,255,.15);color:#fff;border:0;padding:8px 14px;border-radius:8px;cursor:pointer;font-size:.9rem}
+nav button.on{background:#fff;color:#4c1d95;font-weight:700}
+.dot{width:10px;height:10px;border-radius:50%;background:#ef4444;display:inline-block;margin-left:6px}
+.dot.ok{background:#4ade80}
+main{padding:20px;max-width:900px;margin:auto}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px;padding:18px;margin-bottom:14px}
+.btn{background:var(--pri);color:#fff;border:0;border-radius:10px;padding:12px 18px;font-size:1rem;cursor:pointer;font-weight:600}
+.btn:hover{filter:brightness(1.1)}.btn:disabled{opacity:.5}
+.btn.sec{background:transparent;color:var(--tx);border:1px solid var(--bd)}
+.btn.warn{background:var(--acc);color:#222}
+.btn.red{background:var(--dng)}
+.btn.huge{width:100%;padding:34px;font-size:1.8rem;border-radius:18px}
+.mut{color:var(--mut);font-size:.9rem}
+h2{margin:0 0 12px;font-size:1.1rem}
+.num{font-size:4rem;font-weight:800;color:var(--pri);line-height:1.1}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+input{padding:9px 10px;border-radius:8px;border:1px solid var(--bd);background:var(--card);color:var(--tx);font-size:.95rem}
+table{width:100%;border-collapse:collapse}
+td,th{padding:8px;border-bottom:1px solid var(--bd);text-align:left;font-size:.9rem}
+.tag{padding:2px 8px;border-radius:99px;font-size:.75rem}
+.tag.w{background:#fde68a;color:#78350f}.tag.c{background:#e9d5ff;color:#4c1d95}.tag.d{background:#bbf7d0;color:#14532d}.tag.s{background:#fecaca;color:#7f1d1d}
+.hidden{display:none!important}
+.stats{display:flex;gap:12px;flex-wrap:wrap}.stats div{flex:1;min-width:110px;text-align:center}.stats b{display:block;font-size:2rem;color:var(--pri)}
+#err{display:none;background:#fee2e2;color:#7f1d1d;padding:10px 20px;font-size:.9rem}
+/* DISPLAY */
+#v-display{position:fixed;inset:0;background:linear-gradient(160deg,#2e1065,#4c1d95 60%,#5b21b6);color:#fff;padding:24px;display:flex;flex-direction:column;z-index:50}
+#v-display .top{display:flex;justify-content:space-between;align-items:center}
+#v-display h1{margin:0;font-size:2rem}
+#clock{font-size:1.8rem;font-variant-numeric:tabular-nums}
+#now{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center}
+#now .lbl{font-size:2.4rem;opacity:.75;letter-spacing:.12em}
+#now .big{font-size:min(30vw,38vh);font-weight:900;color:#fbbf24;line-height:1}
+#now .to{font-size:3rem;font-weight:700}
+#now.flash .big{animation:fl .6s 4}
+@keyframes fl{50%{opacity:.15}}
+#prev{display:flex;gap:14px;justify-content:center;align-items:center;font-size:1.4rem}
+#prev span.n{background:rgba(255,255,255,.12);border-radius:12px;padding:6px 18px;font-weight:700;font-size:2rem;color:#c4b5fd}
+#foot{text-align:center;opacity:.85;margin-top:12px;font-size:1.1rem}
+#unlock{position:absolute;inset:0;background:rgba(0,0,0,.8);display:flex;align-items:center;justify-content:center;font-size:1.6rem;cursor:pointer;z-index:5}
+#exitd{position:absolute;bottom:8px;right:12px;opacity:.3;font-size:.8rem;color:#fff;text-decoration:none}
+#dconn{position:absolute;top:8px;right:8px}
+/* PRINT */
+#ticket,#plist{display:none}
+@media print{
+ body>*:not(#ticket){display:none!important}
+ #ticket{display:block;width:72mm;margin:0 auto;text-align:center;font-family:Arial,sans-serif;color:#000}
+ #ticket h3{margin:4px 0;font-size:16px}#ticket .t{font-size:72px;font-weight:900;margin:8px 0}
+ #ticket p{margin:2px 0;font-size:13px}
+ body.printlist>*:not(#plist){display:none!important}
+ body.printlist #plist{display:block!important}
+ @page{margin:4mm}
+}
+</style>
+</head>
+<body>
+<header>
+ <h1><span id="hname">Antrian Pendaftaran</span><small id="htag"></small></h1>
+ <nav>
+  <button data-v="ambil">Ambil Nomor</button>
+  <button data-v="operator">Panggil</button>
+  <button data-v="setting">Pengaturan</button>
+  <button id="openDisp">Layar Display ↗</button>
+  <span id="conn" class="dot" title="Status koneksi"></span>
+ </nav>
+</header>
+<div id="err"></div>
+
+<main>
+ <section id="v-ambil">
+  <div class="card" style="text-align:center">
+   <h2>Antrian Pendaftaran</h2>
+   <p class="mut">Tekan tombol untuk mengambil nomor antrian.</p>
+   <button class="btn huge" id="bAmbil">AMBIL NOMOR</button>
+   <div class="mut" style="margin-top:14px">Menunggu: <b id="kWait">0</b> · Nomor terakhir: <b id="kLast">-</b> · Sedang dipanggil: <b id="kCur">-</b></div>
+   <label class="row" style="margin-top:12px;justify-content:center"><input type="checkbox" id="autoprint" checked> Cetak tiket otomatis di perangkat ini</label>
+  </div>
+ </section>
+
+ <section id="v-operator" class="hidden">
+  <div class="card">
+   <div class="mut">Sedang dipanggil</div>
+   <div class="num" id="opCur">-</div>
+   <div class="row" style="margin-top:12px">
+    <button class="btn" id="bNext">▶ Panggil Berikutnya</button>
+    <button class="btn warn" id="bRecall">🔁 Ulangi</button>
+    <button class="btn sec" id="bDone">✔ Selesai</button>
+    <button class="btn sec" id="bSkip">⏭ Lewati</button>
+   </div>
+   <div class="row" style="margin-top:10px">
+    <b class="mut">Panggil manual:</b><input id="manNo" type="number" min="1" style="width:90px"><button class="btn sec" id="bMan">Panggil</button>
+    <button class="btn sec" id="printList" style="margin-left:auto">Cetak Daftar</button>
+   </div>
+  </div>
+  <div class="card stats">
+   <div><b id="stW">0</b><span class="mut">Menunggu</span></div>
+   <div><b id="stD">0</b><span class="mut">Selesai</span></div>
+   <div><b id="stS">0</b><span class="mut">Dilewati</span></div>
+   <div><b id="stT">0</b><span class="mut">Total</span></div>
+  </div>
+  <div class="card">
+   <h2>Daftar Antrian</h2>
+   <div style="max-height:380px;overflow:auto"><table><thead><tr><th>No</th><th>Jam</th><th>Status</th><th></th></tr></thead><tbody id="opList"></tbody></table></div>
+  </div>
+ </section>
+
+ <section id="v-setting" class="hidden">
+  <div class="card">
+   <h2>Identitas &amp; Kode Nomor</h2>
+   <div class="row"><input id="sName" placeholder="Nama klinik" style="flex:1;min-width:220px"><input id="sAddr" placeholder="Alamat singkat" style="flex:1;min-width:220px"><input id="sTel" placeholder="No. telepon" style="width:170px"><input id="sTag" placeholder="Slogan" style="width:200px"><input id="sCode" placeholder="Kode" maxlength="2" style="width:80px"></div>
+   <div class="row" style="margin-top:10px"><button class="btn" id="saveCfg">Simpan Pengaturan</button><span class="mut" id="cfgMsg"></span></div>
+  </div>
+  <div class="card">
+   <h2>Operator</h2>
+   <p class="mut">Pengaturan, panggilan, dan reset memakai PIN operator (diatur di Vercel). Pengambilan nomor tidak butuh PIN.</p>
+   <div class="row"><button class="btn sec" id="chgPin">Ganti PIN di perangkat ini</button><button class="btn red" id="resetAll">Reset Antrian Hari Ini</button></div>
+  </div>
+ </section>
+</main>
+
+<section id="v-display" class="hidden">
+ <div id="unlock">🔊 Klik layar untuk mengaktifkan suara</div>
+ <span id="dconn" class="dot"></span>
+ <div class="top"><h1 id="dName">Klinik</h1><div id="clock"></div></div>
+ <div id="now"><div class="lbl">NOMOR ANTRIAN</div><div class="big" id="dNo">---</div><div class="to" id="dTo">Menunggu panggilan</div></div>
+ <div id="prev"></div>
+ <div id="foot"></div>
+ <a id="exitd" href="#ambil">keluar</a>
+</section>
+
+<div id="ticket"></div>
+<div id="plist"></div>
+
+<script>
+let S={cfg:{clinic:'Antrian',tag:'',addr:'',tel:'',code:'A'},last:0,cur:null,call:null,q:[]};
+const $=id=>document.getElementById(id);
+const fmt=n=>S.cfg.code+String(n).padStart(3,'0');
+const esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const hm=t=>new Date(t).toLocaleTimeString('id-ID',{hour:'2-digit',minute:'2-digit'});
+const stName=s=>({w:'Menunggu',c:'Dipanggil',d:'Selesai',s:'Dilewati'}[s]);
+
+/* ---------- API ---------- */
+async function api(body){
+ const pin=localStorage.getItem('aq_pin')||'';
+ const r=await fetch('/api/action',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({...body,pin})});
+ if(r.status===401){const p=prompt('Masukkan PIN operator:');if(p===null)throw new Error('PIN dibatalkan');localStorage.setItem('aq_pin',p);return api(body)}
+ const j=await r.json().catch(()=>({}));
+ if(!r.ok)throw new Error(j.error||'Gagal ('+r.status+')');
+ return j}
+async function act(a,extra){try{await api({action:a,...extra});await poll()}catch(e){alert(e.message)}}
+
+let timer,fails=0;
+function setConn(ok,msg){['conn','dconn'].forEach(i=>$(i).classList.toggle('ok',ok));const e=$('err');e.style.display=ok?'none':'block';e.textContent=msg||'Koneksi terputus, mencoba lagi…'}
+async function poll(){
+ try{const r=await fetch('/api/state',{cache:'no-store'});const j=await r.json();
+  if(!r.ok)throw new Error(j.error||'Server error');
+  S=j;fails=0;setConn(true);render()}
+ catch(e){fails++;setConn(false,fails>1?e.message:null)}}
+function startPoll(){clearInterval(timer);poll();timer=setInterval(poll,{ambil:4000,operator:2000,display:1500,setting:5000}[view])}
+
+/* ---------- views ---------- */
+let view='ambil',cfgFilled=false;
+function route(){let h=location.hash.slice(1)||'ambil';if(!['ambil','operator','setting','display'].includes(h))h='ambil';view=h;
+ ['ambil','operator','setting'].forEach(v=>$('v-'+v).classList.toggle('hidden',v!==h));
+ $('v-display').classList.toggle('hidden',h!=='display');
+ document.querySelector('header').classList.toggle('hidden',h==='display');
+ document.querySelector('main').classList.toggle('hidden',h==='display');
+ document.querySelectorAll('nav button[data-v]').forEach(b=>b.classList.toggle('on',b.dataset.v===h));
+ lastTs=null;cfgFilled=false;startPoll()}
+window.addEventListener('hashchange',route);
+document.querySelectorAll('nav button[data-v]').forEach(b=>b.onclick=()=>location.hash=b.dataset.v);
+$('openDisp').onclick=()=>window.open(location.href.split('#')[0]+'#display','displayAntrian','width=1280,height=720');
+
+function render(){
+ $('hname').textContent=S.cfg.clinic;$('htag').textContent=S.cfg.tag||'';document.title='Antrian - '+S.cfg.clinic;
+ if(view==='ambil')rAmbil();if(view==='operator')rOp();if(view==='setting')rSet();if(view==='display')rDisp()}
+
+/* ---------- ambil nomor ---------- */
+function rAmbil(){$('kWait').textContent=S.q.filter(x=>x.st==='w').length;$('kLast').textContent=S.last?fmt(S.last):'-';$('kCur').textContent=S.cur?fmt(S.cur):'-'}
+$('bAmbil').onclick=async()=>{const b=$('bAmbil');b.disabled=true;
+ try{const it=await api({action:'ticket'});poll();if($('autoprint').checked)printTicket(it);else alert('Nomor Anda: '+fmt(it.no))}
+ catch(e){alert('Gagal mengambil nomor: '+e.message)}
+ setTimeout(()=>b.disabled=false,800)};
+function printTicket(it){const c=S.cfg;
+ $('ticket').innerHTML=`<h3>${esc(c.clinic)}</h3><p>${esc(c.addr)}</p><hr><p>NOMOR ANTRIAN</p><div class="t">${fmt(it.no)}</div><p>${new Date(it.t).toLocaleString('id-ID')}</p><p>Antrian di depan Anda: ${it.ahead}</p><hr><p>Mohon menunggu panggilan.<br>Info: ${esc(c.tel)}<br><i>${esc(c.tag)}</i></p>`;
+ document.body.classList.remove('printlist');setTimeout(()=>window.print(),80)}
+
+/* ---------- operator ---------- */
+function rOp(){
+ $('opCur').textContent=S.cur?fmt(S.cur):'-';
+ const l=S.q,c=st=>l.filter(x=>x.st===st).length;
+ $('stW').textContent=c('w');$('stD').textContent=c('d');$('stS').textContent=c('s');$('stT').textContent=l.length;
+ $('opList').innerHTML=l.map(x=>`<tr><td><b>${fmt(x.no)}</b></td><td>${hm(x.t)}</td><td><span class="tag ${x.st}">${stName(x.st)}</span></td><td><button class="btn sec" style="padding:4px 10px;font-size:.85rem" onclick="act('call',{no:${x.no}})">Panggil</button></td></tr>`).join('')||'<tr><td colspan="4" class="mut">Belum ada antrian</td></tr>'}
+$('bNext').onclick=()=>act('next');
+$('bRecall').onclick=()=>act('recall');
+$('bDone').onclick=()=>act('done');
+$('bSkip').onclick=()=>act('skip');
+$('bMan').onclick=()=>{const n=parseInt($('manNo').value);if(n)act('call',{no:n})};
+$('printList').onclick=()=>{const l=S.q;
+ $('plist').innerHTML=`<h2>${esc(S.cfg.clinic)} – Antrian Pendaftaran</h2><p>${new Date().toLocaleDateString('id-ID',{dateStyle:'full'})}</p><table border="1" cellspacing="0" cellpadding="6" style="width:100%;border-collapse:collapse"><tr><th>No</th><th>Jam Ambil</th><th>Status</th></tr>${l.map(x=>`<tr><td>${fmt(x.no)}</td><td>${hm(x.t)}</td><td>${stName(x.st)}</td></tr>`).join('')}</table><p>Total: ${l.length} · Selesai: ${l.filter(x=>x.st==='d').length} · Dilewati: ${l.filter(x=>x.st==='s').length}</p>`;
+ document.body.classList.add('printlist');setTimeout(()=>{window.print();document.body.classList.remove('printlist')},80)};
+
+/* ---------- display ---------- */
+let lastTs=null,voiceOn=false;
+function rDisp(){const c=S.cfg;
+ $('dName').textContent=c.clinic;$('foot').textContent=[c.tag,c.addr,c.tel].filter(Boolean).join(' · ');
+ const hist=S.q.filter(x=>x.st!=='w'&&x.no!==S.cur).sort((a,b)=>b.no-a.no).slice(0,4);
+ $('prev').innerHTML=hist.length?'<span>Sebelumnya:</span>'+hist.map(x=>`<span class="n">${fmt(x.no)}</span>`).join(''):'';
+ if(S.call){$('dNo').textContent=fmt(S.call.no);$('dTo').textContent='Silakan maju ke depan';
+  if(lastTs===null)lastTs=S.call.ts;
+  else if(S.call.ts!==lastTs){lastTs=S.call.ts;const n=$('now');n.classList.remove('flash');void n.offsetWidth;n.classList.add('flash');announce(S.call)}}
+ else{$('dNo').textContent='---';$('dTo').textContent='Menunggu panggilan';lastTs=0}}
+$('unlock').onclick=()=>{voiceOn=true;$('unlock').classList.add('hidden');speak('Suara aktif')};
+setInterval(()=>{$('clock').textContent=new Date().toLocaleTimeString('id-ID')},1000);
+function chime(){try{const a=new (window.AudioContext||window.webkitAudioContext)();[660,880].forEach((f,i)=>{const o=a.createOscillator(),g=a.createGain();o.frequency.value=f;o.connect(g);g.connect(a.destination);const t=a.currentTime+i*.3;g.gain.setValueAtTime(.3,t);g.gain.exponentialRampToValueAtTime(.001,t+.5);o.start(t);o.stop(t+.5)})}catch(e){}}
+function speak(t){if(!('speechSynthesis' in window))return;const u=new SpeechSynthesisUtterance(t);u.lang='id-ID';u.rate=.85;const v=speechSynthesis.getVoices().find(v=>v.lang&&v.lang.toLowerCase().startsWith('id'));if(v)u.voice=v;speechSynthesis.speak(u)}
+function announce(c){if(!voiceOn)return;chime();speechSynthesis.cancel();
+ const digits=String(c.no).split('').join(' ');
+ setTimeout(()=>speak(`Nomor antrian ${S.cfg.code} ${digits}, silakan maju ke depan`),900)}
+
+/* ---------- pengaturan ---------- */
+function rSet(){if(cfgFilled)return;cfgFilled=true;const c=S.cfg;
+ $('sName').value=c.clinic;$('sAddr').value=c.addr;$('sTel').value=c.tel;$('sTag').value=c.tag;$('sCode').value=c.code}
+$('saveCfg').onclick=async()=>{try{await api({action:'config',cfg:{clinic:$('sName').value.trim()||'Klinik',addr:$('sAddr').value,tel:$('sTel').value,tag:$('sTag').value,code:$('sCode').value.trim()||'A'}});$('cfgMsg').textContent='Tersimpan ✓';await poll()}catch(e){$('cfgMsg').textContent=e.message}};
+$('chgPin').onclick=()=>{const p=prompt('PIN operator untuk perangkat ini:');if(p!==null)localStorage.setItem('aq_pin',p)};
+$('resetAll').onclick=()=>{if(confirm('Reset semua nomor antrian hari ini ke 0?'))act('reset')};
+
+route();
+</script>
+</body>
+</html>
